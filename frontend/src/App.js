@@ -117,9 +117,33 @@ export default function App() {
         try {
           const msg = JSON.parse(event.data);
           if (msg.type === "DEPLOYMENT_UPDATE") {
-            setDeployments(msg.deployments || []);
+            setDeployments(prev => {
+              const newDeps = msg.deployments || [];
+              // B. DEPLOYMENT_UPDATE must NOT override manual state
+              return newDeps.map(nd => {
+                const existing = prev.find(p => p.name === nd.name);
+                if (existing && existing.manualOverride) {
+                   return { ...nd, status: existing.status, manualOverride: true };
+                }
+                return nd;
+              });
+            });
           } else if (msg.type === "CHAOS_LOG") {
             setChaosLogs(prev => [...prev, msg.message]);
+          } else if (msg.type === "SYSTEM_EVENT") {
+            // A. SYSTEM_EVENT must update UI state
+            setDeployments(prev => prev.map(d => {
+              if (d.name === msg.service) {
+                // C. Clear override ONLY when status == "healthy"
+                const isHealthy = msg.status === "healthy";
+                return { 
+                  ...d, 
+                  status: msg.status, 
+                  manualOverride: !isHealthy 
+                };
+              }
+              return d;
+            }));
           }
         } catch (err) {}
       };
