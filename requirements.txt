@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+kubernetes
+kubernetes_asyncio
+redis
+neo4j
+langgraph
+langchain
+langchain-huggingface
+sentence-transformers
+langchain-groq
+qdrant-client
+python-dotenv
